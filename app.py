@@ -8,6 +8,8 @@ from flask_mysqldb import MySQL
 from wtforms import Form, StringField, TextAreaField, PasswordField, validators
 # Passlib
 from passlib.hash import sha256_crypt
+# Wraps
+from functools import wraps
 
 # Initialize Flask
 app = Flask(__name__,
@@ -46,6 +48,73 @@ def article(id):
 def about():
     return render_template('about.html', title='About')
 
+# Login
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    # if request is POST...
+    if request.method == 'POST':
+        # Get Fields from Form
+        username = request.form['username']
+        # Saved as candidate to check with real password
+        password_candidate = request.form['password']
+
+        # Create cursor
+        cur = mysql.connection.cursor()
+
+        # Get user by username
+        result = cur.execute('SELECT * FROM users WHERE username = %s', [username])
+        
+        # If username exists...
+        if result > 0:
+            # Get stored hash
+            data = cur.fetchone()
+            password = data['password']
+
+            # If password matches...
+            if sha256_crypt.verify(password_candidate, password):
+                session['logged_in'] = True
+                session['username'] = username
+
+                flash('You are now logged in!', 'success')
+                return redirect(url_for('dashboard'))
+            # ... if they don't match...
+            else:#
+                # ... error.
+                error = 'Invalid login! Check your credentials.'
+                return render_template('login.html', title="Login", error=error)
+            
+            # Close connection
+            cur.close()
+
+        # ... if username doesn't exist...
+        else:
+            # .. error.
+            error = 'Invalid login! Check your credentials.'
+            return render_template('login.html', title="Login", error=error)
+
+    # ... else GET...
+    else:
+        return render_template('login.html', title="Login")
+
+# Check if user logged in
+def is_logged_in(f):
+    @wraps(f)
+    def wrap(*args, **kwargs):
+        if 'logged_in' in session:
+            return f(*args, **kwargs)
+        else:
+            flash('You need to login first.', 'danger')
+            return redirect(url_for('login'))
+    return wrap
+
+# Logout
+@app.route('/logout')
+def logout():
+    # Log user out
+    session.clear()
+    flash('You are now logged out!')
+    return redirect(url_for('index'))
+
 # Register Form
 class RegisterForm(Form):
     name = StringField('Name', [validators.Length(min=1, max=50)])
@@ -82,10 +151,17 @@ def register():
 
         flash('You are now registered and can log in!', 'success')
 
-        return redirect(url_for('index'))
+        return redirect(url_for('login'))
+
     # ... else GET...
     else:
-        return render_template('register.html', form=form)
+        return render_template('register.html', title="Register", form=form)
+
+# Dashboard
+@app.route('/dashboard')
+@is_logged_in
+def dashboard():
+    return render_template('dashboard.html')
 
 # Activate Debugging Tools
 if __name__ == '__main__':

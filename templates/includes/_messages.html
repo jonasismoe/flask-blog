@@ -1,3 +1,4 @@
+<!-- Used for redirect flashs -->
 {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
         {% for category, message in messages %}
@@ -5,3 +6,15 @@
         {% endfor %}
     {% endif %}
 {% endwith %}
+
+<!-- Used to render pass along alerts -->
+
+<!-- Error Message -->
+{% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
+<!-- Success Message -->
+{% if msg %}
+    <div class="alert alert-success">{{ msg }}</div>
+{% endif %}
