@@ -4,5 +4,11 @@
     <div class="jumbotron text-center">
         <h1>Welcome to Flask Blog</h1>
         <p class="lead">Post Articles about everything you like.</p>
+        <!-- If not logged in... -->
+        {% if session.logged_in == NULL %}
+            <!-- Show login and register -->
+            <a href="/login" class="btn btn-success btn-lg">Login</a>
+            <a href="/register" class="btn btn-primary btn-lg">Register</a>
+        {% endif %}
     </div>
 {% endblock %}
