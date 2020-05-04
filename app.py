@@ -256,70 +256,118 @@ def add_article():
         return render_template('add-article.html', title='Add Article', form=form)
 
 # Edit Article
-@app.route('/edit-article/<string:id>', methods=['GET', 'POST'])
+@app.route('/edit-article/<string:id>/', methods=['GET', 'POST'])
 @is_logged_in
 def edit_article(id):
+
+    # Check if user is allowed to edit #
+
     # Create cursor
     cur = mysql.connection.cursor()
 
-    # Get article by id
-    cur.execute('SELECT * FROM articles WHERE id = %s', [id])
+    # Execute
+    cur.execute('SELECT author FROM articles WHERE id = %s', [id])
 
-    # Fetch result
-    article = cur.fetchone()
+    # Fetch
+    result = cur.fetchone()
 
-    # Get form
-    form = ArticleForm(request.form)
+    # Close connection
+    cur.close()
 
-    # Populate form fields
-    form.title.data = article['title']
-    form.body.data = article['body']
+    # If user is allowed...
+    if session['username'] == result['author']:
+        # Create cursor
+        cur = mysql.connection.cursor()
 
-    # If request is POST and form is validated...
-    if request.method == 'POST' and form.validate():
-        # Get title and body from form
-        title = request.form['title']
-        body = request.form['body']
+        # Get article by id
+        cur.execute('SELECT * FROM articles WHERE id = %s', [id])
+
+        # Fetch result
+        article = cur.fetchone()
+        
+        # Get form
+        form = ArticleForm(request.form)
+
+        # Populate form fields
+        form.title.data = article['title']
+        form.body.data = article['body']
+
+        # If request is POST and form is validated...
+        if request.method == 'POST' and form.validate():
+            # Get title and body from form
+            title = request.form['title']
+            body = request.form['body']
+
+            # Create cursor
+            cur = mysql.connection.cursor()
+
+            # Query
+            cur.execute('UPDATE articles SET title = %s, body = %s WHERE id = %s', (title, body, id))
+
+            # Commit
+            mysql.connection.commit()
+
+            # Close connection
+            cur.close()
+
+            flash('Article Updated!', 'success')
+
+            return redirect(url_for('dashboard'))
+
+        # ... else GET request.
+        else:
+            return render_template('edit-article.html', title='Edit Article', form=form)
+    
+    # ... if not allowed to edit return to dashboard.
+    else:
+        flash('You are not allowed to edit this article!', 'danger')
+
+        return redirect(url_for('dashboard'))
+
+# Delete Article
+@app.route('/delete-article/<string:id>/', methods=["POST"])
+@is_logged_in
+def delete_article(id):
+
+    # Check if user is allowed to delete #
+
+    # Create cursor
+    cur = mysql.connection.cursor()
+
+    # Execute
+    cur.execute('SELECT author FROM articles WHERE id = %s', [id])
+
+    # Commit
+    result = cur.fetchone()
+
+    # Close connection
+    cur.close()
+
+    # If user is allowed...
+    if session['username'] == result['author']:
+        # Delete article
 
         # Create cursor
         cur = mysql.connection.cursor()
 
-        # Query
-        cur.execute('UPDATE articles SET title = %s, body = %s WHERE id = %s', (title, body, id))
+        # Execute
+        cur.execute('DELETE FROM articles WHERE id = %s', [id])
 
-        # Commit
+        # Fetch
         mysql.connection.commit()
 
         # Close connection
         cur.close()
 
-        flash('Article Updated!', 'success')
+        flash('Article Deleted!', 'success')
 
         return redirect(url_for('dashboard'))
 
-    # ... else GET request.
+    # ... else return to dashboard
     else:
-        return render_template('edit-article.html', title='Edit Article', form=form)
+        flash('You are now allowed to delete this article!', 'danger')
 
-# Delete Article
-@app.route('/delete-article/<string:id>', methods=["POST"])
-@is_logged_in
-def delete_article(id):
-    # Create cursor
-    cur = mysql.connection.cursor()
-
-    # Execute
-    cur.execute('DELETE FROM articles WHERE id = %s', [id])
-
-    # Commit
-    mysql.connection.commit()
-
-    # Close connection
-    cur.close()
-
-    flash('Article Deleted!', 'success')
-
-    return redirect(url_for('dashboard'))
+        return redirect(url_for('dashboard'))
 
 # Activate Debugging Tools
 if __name__ == '__main__':
