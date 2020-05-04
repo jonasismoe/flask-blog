@@ -177,21 +177,58 @@ def register():
         username = form.username.data
         password = sha256_crypt.encrypt(str(form.password.data))
 
+        # Check if email or username is already registered #
+
+        # Email
         # Create cursor
         cur = mysql.connection.cursor()
-
         # Query
-        cur.execute("INSERT INTO users(name, email, username, password) VALUES(%s, %s, %s, %s)", (name, email, username, password))
-
-        # Commit to DB
-        mysql.connection.commit()
-
+        cur.execute('SELECT * from users WHERE email = %s', [email])
+        # Fetch
+        email_check = cur.fetchone()
+        # Close connection
+        cur.close()
+        # Username
+        # Create cursor
+        cur = mysql.connection.cursor()
+        # Query
+        cur.execute('SELECT * from users WHERE username = %s', [username])
+        # Fetch
+        username_check = cur.fetchone()
         # Close connection
         cur.close()
 
-        flash('You are now registered and can log in!', 'success')
+        # If user already exists...
+        if username_check:
+            # Flash and redirect
+            flash('The username you typed in already exists!', 'danger')
 
-        return redirect(url_for('login'))
+            return redirect(url_for('register'))
+        
+        # ... elif email already exists...
+        elif email_check:
+            # Flash and redirect
+            flash('The email you typed in already exists!', 'danger')
+
+            return redirect(url_for('register'))
+        
+        # If user and email is ok... 
+        else:
+            # Create cursor
+            cur = mysql.connection.cursor()
+
+            # Query
+            cur.execute("INSERT INTO users(name, email, username, password) VALUES(%s, %s, %s, %s)", (name, email, username, password))
+
+            # Commit to DB
+            mysql.connection.commit()
+
+            # Close connection
+            cur.close()
+
+            flash('You are now registered and can log in!', 'success')
+
+            return redirect(url_for('login'))
 
     # ... else GET...
     else:
