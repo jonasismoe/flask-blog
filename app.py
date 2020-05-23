@@ -89,7 +89,16 @@ def article(id):
     # Close cursor
     cur.close()
 
-    return render_template('article.html', article=article)
+    # If article exists...
+    if article:
+        # Return article
+        return render_template('article.html', article=article)
+    
+    # If it doesn't exist...
+    else:
+        # Flash and return to articles
+        flash('The article you tried to view doesn\'t exist or was deleted!', 'warning')
+        return redirect((url_for('articles')))
 
 # About
 @app.route('/about')
@@ -310,55 +319,62 @@ def edit_article(id):
 
     # Close connection
     cur.close()
+  
+    # If article exists...
+    if result:
 
-    # If user is allowed...
-    if session['username'] == result['author']:
-        # Create cursor
-        cur = mysql.connection.cursor()
-
-        # Get article by id
-        cur.execute('SELECT * FROM articles WHERE id = %s', [id])
-
-        # Fetch result
-        article = cur.fetchone()
-        
-        # Get form
-        form = ArticleForm(request.form)
-
-        # Populate form fields
-        form.title.data = article['title']
-        form.body.data = article['body']
-
-        # If request is POST and form is validated...
-        if request.method == 'POST' and form.validate():
-            # Get title and body from form
-            title = request.form['title']
-            body = request.form['body']
-
+        # If user is allowed...
+        if session['username'] == result['author']:
             # Create cursor
             cur = mysql.connection.cursor()
 
-            # Query
-            cur.execute('UPDATE articles SET title = %s, body = %s WHERE id = %s', (title, body, id))
+            # Get article by id
+            cur.execute('SELECT * FROM articles WHERE id = %s', [id])
 
-            # Commit
-            mysql.connection.commit()
+            # Fetch result
+            article = cur.fetchone()
+                
+            # Get form
+            form = ArticleForm(request.form)
 
-            # Close connection
-            cur.close()
+            # Populate form fields
+            form.title.data = article['title']
+            form.body.data = article['body']
 
-            flash('Article Updated!', 'success')
+            # If request is POST and form is validated...
+            if request.method == 'POST' and form.validate():
+                # Get title and body from form
+                title = request.form['title']
+                body = request.form['body']
 
+                # Create cursor
+                cur = mysql.connection.cursor()
+
+                # Query
+                cur.execute('UPDATE articles SET title = %s, body = %s WHERE id = %s', (title, body, id))
+
+                # Commit
+                mysql.connection.commit()
+
+                # Close connection
+                cur.close()
+
+                flash('Article Updated!', 'success')
+
+                return redirect(url_for('dashboard'))
+
+            # ... else GET request.
+            else:
+                return render_template('edit-article.html', title='Edit Article', form=form)
+
+        # ... if not allowed to edit return to dashboard.
+        else:
+            flash('You are not allowed to edit this article!', 'danger')
             return redirect(url_for('dashboard'))
 
-        # ... else GET request.
-        else:
-            return render_template('edit-article.html', form=form)
-    
-    # ... if not allowed to edit return to dashboard.
+    # If article doesn't exist...
     else:
-        flash('You are not allowed to edit this article!', 'danger')
-
+        flash('This article doesn\'t exist!', 'danger')
         return redirect(url_for('dashboard'))
 
 # Delete Article
@@ -380,30 +396,38 @@ def delete_article(id):
     # Close connection
     cur.close()
 
-    # If user is allowed...
-    if session['username'] == result['author']:
-        # Delete article
+    # If article exists...
+    if result:
 
-        # Create cursor
-        cur = mysql.connection.cursor()
+        # If user is allowed...
+        if session['username'] == result['author']:
+            # Delete article
 
-        # Execute
-        cur.execute('DELETE FROM articles WHERE id = %s', [id])
+            # Create cursor
+            cur = mysql.connection.cursor()
 
-        # Fetch
-        mysql.connection.commit()
+            # Execute
+            cur.execute('DELETE FROM articles WHERE id = %s', [id])
 
-        # Close connection
-        cur.close()
+            # Fetch
+            mysql.connection.commit()
 
-        flash('Article Deleted!', 'success')
+            # Close connection
+            cur.close()
 
-        return redirect(url_for('dashboard'))
+            flash('Article Deleted!', 'success')
 
-    # ... else return to dashboard
+            return redirect(url_for('dashboard'))
+
+        # ... else return to dashboard
+        else:
+            flash('You are now allowed to delete this article!', 'danger')
+
+            return redirect(url_for('dashboard'))
+
+    # If article doesn't exist...
     else:
-        flash('You are now allowed to delete this article!', 'danger')
-
+        flash('The article you tried to delete doesn\'t exist!', 'danger')
         return redirect(url_for('dashboard'))
 
 # Activate Debugging Tools
