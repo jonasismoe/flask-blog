@@ -1,3 +1,9 @@
+{% if title %}
+{% set title = title %}
+{% else %}
+{% set title = 'Article' %}
+{% endif %}
+
 {% extends 'template.html' %}
 
 {% block body %}

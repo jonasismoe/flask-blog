@@ -49,7 +49,7 @@ def is_not_logged_in(f):
 @app.route('/index')
 @app.route('/')
 def index():
-    return render_template('index.html', title='Home')
+    return render_template('index.html')
 
 # Articles
 @app.route('/articles')
@@ -65,10 +65,10 @@ def articles():
 
     # If there is an result...
     if result > 0:
-        return render_template('articles.html', title='Articles', articles=articles)
+        return render_template('articles.html', articles=articles)
     else:
         msg = 'No Articles Found!'
-        return render_template('articles.html', title="Articles", msg=msg)
+        return render_template('articles.html', msg=msg)
     
     # Close connection
     cur.close()
@@ -89,12 +89,12 @@ def article(id):
     # Close cursor
     cur.close()
 
-    return render_template('article.html', title='Articles', article=article)
+    return render_template('article.html', article=article)
 
 # About
 @app.route('/about')
 def about():
-    return render_template('about.html', title='About')
+    return render_template('about.html')
 
 # Login
 @app.route('/login', methods=['GET', 'POST'])
@@ -130,7 +130,7 @@ def login():
             else:#
                 # ... error.
                 error = 'Invalid login! Check your credentials.'
-                return render_template('login.html', title="Login", error=error)
+                return render_template('login.html', error=error)
             
             # Close connection
             cur.close()
@@ -139,11 +139,11 @@ def login():
         else:
             # .. error.
             error = 'Invalid login! Check your credentials.'
-            return render_template('login.html', title="Login", error=error)
+            return render_template('login.html', error=error)
 
     # ... else GET...
     else:
-        return render_template('login.html', title="Login")
+        return render_template('login.html')
 
 # Logout
 @app.route('/logout')
@@ -232,7 +232,7 @@ def register():
 
     # ... else GET...
     else:
-        return render_template('register.html', title="Register", form=form)
+        return render_template('register.html', form=form)
 
 # Dashboard
 @app.route('/dashboard')
@@ -249,10 +249,10 @@ def dashboard():
 
     # If there is an result...
     if result > 0:
-        return render_template('dashboard.html', title='Dashboard', articles=articles)
+        return render_template('dashboard.html', articles=articles)
     else:
         msg = 'No Articles Found!'
-        return render_template('dashboard.html', title="Dashboard", msg=msg)
+        return render_template('dashboard.html', msg=msg)
     
     # Close connection
     cur.close()
@@ -290,7 +290,7 @@ def add_article():
 
     # ... else GET request.
     else:
-        return render_template('add-article.html', title='Add Article', form=form)
+        return render_template('add-article.html', form=form)
 
 # Edit Article
 @app.route('/edit-article/<string:id>/', methods=['GET', 'POST'])
@@ -353,7 +353,7 @@ def edit_article(id):
 
         # ... else GET request.
         else:
-            return render_template('edit-article.html', title='Edit Article', form=form)
+            return render_template('edit-article.html', form=form)
     
     # ... if not allowed to edit return to dashboard.
     else:
