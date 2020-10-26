@@ -1,2 +1,2 @@
 # flask-blog
- Simple Flask Blog made using Flask.
+Simple Blog Made Using Python Using Flask and MySQL.
