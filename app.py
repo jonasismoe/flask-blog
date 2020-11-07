@@ -14,6 +14,9 @@ app = Flask(__name__,
             # Template folder location
             template_folder='templates/')
 
+# Set Secret Key
+app.config['SECRET_KEY'] = 'CHANGEMEPLS'
+
 # MySQL Config
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
